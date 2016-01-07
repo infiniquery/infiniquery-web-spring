@@ -26,6 +26,8 @@
 
 package org.infiniquery.web.spring.controller;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.annotation.PostConstruct;
 
 import org.infiniquery.model.ExecutableQuery;
@@ -35,11 +37,14 @@ import org.infiniquery.service.DatabaseAccessService;
 import org.infiniquery.service.DefaultDatabaseAccessService;
 import org.infiniquery.service.DefaultQueryModelService;
 import org.infiniquery.service.QueryModelService;
-import org.springframework.beans.BeansException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,16 +55,25 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * REST controller to serve the communication between the user interface and the infiniquery-core framework.
+ * @author Daniel Doboga
+ * @since 1.0.0
+ */
 @Controller
 @RequestMapping("/queryModel")
 public class QueryModelController {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(QueryModelController.class);
+	
+	//don't start from zero, to avoid giving eventual hints to end users (like how many crashes have been already).
+	private static final int SOME_RANDOM_INTEGER_WITH_NO_SIGNIFICANCE = 456782;
+	private static final AtomicInteger errorIndexId = new AtomicInteger(SOME_RANDOM_INTEGER_WITH_NO_SIGNIFICANCE);
 	
 	@Autowired
 	private ObjectMapper jacksonObjectMapper;
 
     private QueryModelService queryModelService;
-    
-    private ApplicationContext applicationContext;
 
     @PostConstruct
     private void init() {
@@ -72,50 +86,101 @@ public class QueryModelController {
         jacksonObjectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
     }
 
+    /**
+     * Offer the queryModelService to other beans in the context, in the case it is lazy instantiated during init.
+     * @return queryModelService
+     */
     public QueryModelService getQueryModelService() {
 		return queryModelService;
 	}
 
+    /**
+     * 
+     * @param queryModelService the QueryModelService
+     */
 	public void setQueryModelService(QueryModelService queryModelService) {
 		this.queryModelService = queryModelService;
 	}
 
+	/**
+	 * 
+	 * @return the alias of the "SELECT" keyword to be displayed in UI
+	 * @throws Exception
+	 */
     @RequestMapping(value = "/findKeyword", method= RequestMethod.GET)
     @ResponseBody
     public String getFindKeyword() throws Exception {
         return queryModelService.getFindKeyword();
     }
 
+    /**
+     * 
+     * @return String[] containing all the entity aliases that are available for the UI
+     * @throws Exception
+     */
 	@RequestMapping(value = "/entities", method = RequestMethod.GET)
     @ResponseBody
     public String[] getEntityNames() throws Exception {
         return queryModelService.getEntityDisplayNames().toArray(new String[0]);
     }
 
+	/**
+	 * 
+	 * @param entityDisplayName
+	 * @return String[] containing all attribute aliases to expose in UI for the given entity
+	 * @throws Exception
+	 */
     @RequestMapping(value = "/entityAttributes/{entityDisplayName}", method = RequestMethod.GET)
     @ResponseBody
     public String[] getEntityAttributeNames(@PathVariable final String entityDisplayName) throws Exception {
         return queryModelService.getEntityAttributeDisplayNames(entityDisplayName).toArray(new String[0]);
     }
 
+    /**
+     * 
+     * @param entityDisplayName
+     * @param attributeDisplayName
+     * @return String[] representing the aliases to display in UI for the entity attribute operators
+     * that are applicable to the given attribute of the given entity.
+     * @throws Exception
+     */
     @RequestMapping(value = "/entityAttributeOperators/{entityDisplayName}/{attributeDisplayName}", method = RequestMethod.GET)
     @ResponseBody
     public String[] getEntityAttributeOperatorNames(@PathVariable final String entityDisplayName, @PathVariable final String attributeDisplayName) throws Exception {
         return queryModelService.getEntityAttributeOperatorNames(entityDisplayName, attributeDisplayName);
     }
 
+    /**
+     * 
+     * @param entityDisplayName
+     * @param attributeDisplayName
+     * @param operatorDisplayName
+     * @return PossibleValuesView encapsulating the information necessary to determine the type for dynamically creating the input control type for entering a value
+     * @throws Exception
+     */
     @RequestMapping(value = "/entityAttributeOperatorValue/{entityDisplayName}/{attributeDisplayName}/{operatorDisplayName}", method= RequestMethod.GET)
     @ResponseBody
     public PossibleValuesView getEntityAttributeOperatorValue(@PathVariable final String entityDisplayName, @PathVariable final String attributeDisplayName, @PathVariable final String operatorDisplayName) throws Exception {
         return queryModelService.getEntityAttributeOperatorValue(entityDisplayName, attributeDisplayName, operatorDisplayName);
     }
 
+    /**
+     * 
+     * @return String[] representing the displayable aliases of the condition separators (such as OR and AND).
+     * @throws Exception
+     */
     @RequestMapping(value = "/conditionSeparatorValues", method= RequestMethod.GET)
     @ResponseBody
     public String[] getConditionSeparatorValues() throws Exception {
         return queryModelService.getConditionSeparatorNames();
     }
 
+    /**
+     * 
+     * @param executableQuery
+     * @return QueryResultsView a bean encapsulating the results of a query execution
+     * @throws Exception
+     */
     @RequestMapping(value = "/executeQuery", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public QueryResultsView executeQuery(@RequestBody final ExecutableQuery executableQuery) throws Exception {
@@ -124,13 +189,35 @@ public class QueryModelController {
     	return result;
     }
 
+//    //TODO comment this method, or secure it properly; it's for debug only
+//    @RequestMapping(value = "/compileQuery", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+//    @ResponseBody
+//    public String compileQuery(@RequestBody final ExecutableQuery executableQuery) throws Exception {
+//
+//    	String result = queryModelService.compileQuery(executableQuery);
+//    	return result;
+//    }
+
+    /**
+     * Reload the query context (which is the equivalent of clearing the cache). 
+     * This makes possible to load eventual changes in infiniquery-config.xml, without restarting the application.
+     */
     @RequestMapping(value = "/reloadQueryContext", method = RequestMethod.POST)
     public void reloadQueryContext() {
         queryModelService.reloadQueryContext();
     }
 
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		this.applicationContext = applicationContext;
+    /**
+     * Exception handler for any kind of Throwable
+     * @param t the Throwable to treat.
+     * @return ResponseEntity<String> representing the message to pass to the UI, when an error (or exception) occurs
+     */
+	@ExceptionHandler(Throwable.class)
+	public ResponseEntity<String> genericExceptionHandler(Throwable t) {
+		int errorId = errorIndexId.getAndIncrement();
+		LOGGER.error("(Error ID " + errorId + ") " + t.getMessage(), t);
+		String errorMessage = "An internal server error occurred. The error id is " + errorId + ". Please contact the maintenance team and provide them this number for reference.";
+		return new ResponseEntity<String>(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 }
