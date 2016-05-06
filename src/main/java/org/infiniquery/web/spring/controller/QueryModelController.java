@@ -105,85 +105,78 @@ public class QueryModelController {
 	/**
 	 * 
 	 * @return the alias of the "SELECT" keyword to be displayed in UI
-	 * @throws Exception
 	 */
     @RequestMapping(value = "/findKeyword", method= RequestMethod.GET)
     @ResponseBody
-    public String getFindKeyword() throws Exception {
+    public String getFindKeyword() {
         return queryModelService.getFindKeyword();
     }
 
     /**
      * 
      * @return String[] containing all the entity aliases that are available for the UI
-     * @throws Exception
      */
 	@RequestMapping(value = "/entities", method = RequestMethod.GET)
     @ResponseBody
-    public String[] getEntityNames() throws Exception {
+    public String[] getEntityNames() {
         return queryModelService.getEntityDisplayNames().toArray(new String[0]);
     }
 
 	/**
 	 * 
-	 * @param entityDisplayName
+	 * @param entityDisplayName the display name (or configured alias) of the entity whose attributes are requested.
 	 * @return String[] containing all attribute aliases to expose in UI for the given entity
-	 * @throws Exception
 	 */
     @RequestMapping(value = "/entityAttributes/{entityDisplayName}", method = RequestMethod.GET)
     @ResponseBody
-    public String[] getEntityAttributeNames(@PathVariable final String entityDisplayName) throws Exception {
+    public String[] getEntityAttributeNames(@PathVariable final String entityDisplayName) {
         return queryModelService.getEntityAttributeDisplayNames(entityDisplayName).toArray(new String[0]);
     }
 
     /**
-     * 
-     * @param entityDisplayName
-     * @param attributeDisplayName
+     * Get the aliases of the operators applicable for the given attribute of the given entity.
+     * @param entityDisplayName the display name (or configured alias) of the entity.
+     * @param attributeDisplayName the display name (or configured alias) of the entity attribute.
      * @return String[] representing the aliases to display in UI for the entity attribute operators
      * that are applicable to the given attribute of the given entity.
-     * @throws Exception
      */
     @RequestMapping(value = "/entityAttributeOperators/{entityDisplayName}/{attributeDisplayName}", method = RequestMethod.GET)
     @ResponseBody
-    public String[] getEntityAttributeOperatorNames(@PathVariable final String entityDisplayName, @PathVariable final String attributeDisplayName) throws Exception {
+    public String[] getEntityAttributeOperatorNames(@PathVariable final String entityDisplayName, @PathVariable final String attributeDisplayName) {
         return queryModelService.getEntityAttributeOperatorNames(entityDisplayName, attributeDisplayName);
     }
 
     /**
-     * 
-     * @param entityDisplayName
-     * @param attributeDisplayName
-     * @param operatorDisplayName
+     * Get the possible values to suggest for a specific attribute of an entity in combination with a specific operator.
+     * @param entityDisplayName the display name (or configured alias) of the entity.
+     * @param attributeDisplayName the display name (or configured alias) of the entity attribute.
+     * @param operatorDisplayName the display name of the operator.
      * @return PossibleValuesView encapsulating the information necessary to determine the type for dynamically creating the input control type for entering a value
-     * @throws Exception
      */
     @RequestMapping(value = "/entityAttributeOperatorValue/{entityDisplayName}/{attributeDisplayName}/{operatorDisplayName}", method= RequestMethod.GET)
     @ResponseBody
-    public PossibleValuesView getEntityAttributeOperatorValue(@PathVariable final String entityDisplayName, @PathVariable final String attributeDisplayName, @PathVariable final String operatorDisplayName) throws Exception {
+    public PossibleValuesView getEntityAttributeOperatorValue(@PathVariable final String entityDisplayName, @PathVariable final String attributeDisplayName, @PathVariable final String operatorDisplayName) {
         return queryModelService.getEntityAttributeOperatorValue(entityDisplayName, attributeDisplayName, operatorDisplayName);
     }
 
     /**
      * 
      * @return String[] representing the displayable aliases of the condition separators (such as OR and AND).
-     * @throws Exception
      */
     @RequestMapping(value = "/conditionSeparatorValues", method= RequestMethod.GET)
     @ResponseBody
-    public String[] getConditionSeparatorValues() throws Exception {
+    public String[] getConditionSeparatorValues() {
         return queryModelService.getConditionSeparatorNames();
     }
 
     /**
      * 
-     * @param executableQuery
+     * @param executableQuery the {@link ExecutableQuery} encapsulating the logical query to be executed.
      * @return QueryResultsView a bean encapsulating the results of a query execution
-     * @throws Exception
      */
     @RequestMapping(value = "/executeQuery", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public QueryResultsView executeQuery(@RequestBody final ExecutableQuery executableQuery) throws Exception {
+    public QueryResultsView executeQuery(@RequestBody final ExecutableQuery executableQuery) {
 
     	QueryResultsView result = queryModelService.executeQuery(executableQuery);
     	return result;
@@ -210,7 +203,7 @@ public class QueryModelController {
     /**
      * Exception handler for any kind of Throwable
      * @param t the Throwable to treat.
-     * @return ResponseEntity<String> representing the message to pass to the UI, when an error (or exception) occurs
+     * @return ResponseEntity&lt;String&gt; representing the message to pass to the UI, when an error (or exception) occurs.
      */
 	@ExceptionHandler(Throwable.class)
 	public ResponseEntity<String> genericExceptionHandler(Throwable t) {
