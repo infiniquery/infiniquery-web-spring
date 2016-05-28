@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.infiniquery</groupId>
     <artifactId>infiniquery-web-spring</artifactId>
-    <version>${org.infiniquery.version}</version>
+    <version>1.2</version>
     <packaging>jar</packaging>
 
     <name>Infiniquery Web Spring</name>
@@ -34,11 +32,11 @@
         <url>https://github.com/infiniquery/infiniquery-web-spring</url>
         <connection>scm:git:git://github.com/infiniquery/infiniquery-web-spring.git</connection>
         <developerConnection>scm:git:git@github.com:infiniquery/infiniquery-web-spring.git</developerConnection>
-    </scm>
+      <tag>infiniquery-web-spring-1.2</tag>
+  </scm>
     
     <properties>
     	<org.springframework.version>4.2.5.RELEASE</org.springframework.version>
-    	<org.infiniquery.version>1.2</org.infiniquery.version>
     	<com.fasterxml.jackson.core.version>2.4.4</com.fasterxml.jackson.core.version>
     	<org.slf4j.version>1.7.13</org.slf4j.version>
 	    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -64,7 +62,7 @@
         <dependency>
             <groupId>org.infiniquery</groupId>
             <artifactId>infiniquery-core</artifactId>
-            <version>${org.infiniquery.version}</version>
+            <version>1.2</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
